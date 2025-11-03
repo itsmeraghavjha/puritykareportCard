@@ -1,0 +1,43 @@
+<!-- templates/qa/login.html -->
+<!-- The login page for QA and Superadmin users. -->
+{% extends "base.html" %}
+{% block title %}QA Incharge Login{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
+        <div class="text-center mb-8">
+            <img src="{{ url_for('static', filename='heritage-logo.png') }}" alt="Heritage Foods Logo" class="h-16 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Plant QA Login</h2>
+            <p class="text-gray-500">Please sign in to continue</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('main.qa_login') }}" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" name="username" id="username" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password" id="password" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="pt-2">
+                <button type="submit" class="w-full bg-heritage-green text-white font-bold text-lg py-3 px-4 rounded-md hover:bg-heritage-green-dark transition-all transform hover:scale-105 shadow-lg">
+                    Login
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

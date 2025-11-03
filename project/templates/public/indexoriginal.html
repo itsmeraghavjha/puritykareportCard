@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Purity Ka Report Card{% endblock %}
+
+{% block content %}
+<div class="space-y-16 md:space-y-24">
+    <div class="max-w-2xl mx-auto">
+        <section class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 items-center">
+                <div class="p-8 text-center md:text-left">
+                    <img src="{{ url_for('static', filename='purity-logo.png') }}" alt="Purity Ka Report Card" class="max-w-xs mx-auto mb-6">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">Check Your Milk's Report Card</h1>
+                    <p class="text-lg text-gray-600 mt-3">Your trust is our priority. Enter the details from the product pack to view its quality report instantly.</p>
+                </div>
+                <div class="bg-gray-50 p-8 h-full">
+                    <form method="POST" action="{{ url_for('main.index') }}" class="space-y-5">
+                        <div>
+                            <label for="expiry-date" class="block text-sm font-medium text-gray-700 mb-1">Use By Date</label>
+                            <input type="date" id="expiry-date" name="expiry-date" class="block w-full text-base px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+                        </div>
+                        <div>
+                            <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                            <select id="sku" name="sku" class="block w-full text-base px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+                                <option value="">Select a product</option>
+                                {% for product in products %}
+                                <option value="{{ product.sku }}">{{ product.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="batch-code" class="block text-sm font-medium text-gray-700 mb-1">Batch Code</label>
+                            <input type="text" id="batch-code" name="batch-code" placeholder="e.g., SM17B" class="block w-full text-base px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green uppercase" required>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="w-full bg-heritage-green text-white font-bold text-lg py-3 px-4 rounded-lg hover:bg-heritage-green-dark transition-all transform hover:scale-105 shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300">
+                                View Report
+                            </button>
+                        </div>
+                    </form>
+                    {% if error %}
+                    <div class="mt-4 text-center text-red-700 bg-red-100 p-3 rounded-lg border border-red-200">
+                        <p class="font-medium">{{ error }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section x-data="{ tab: 'quality' }" class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold text-gray-800">Our Commitment to Purity</h2>
+            <p class="text-gray-600 mt-2 max-w-2xl mx-auto">We believe in complete transparency. Learn more about the rigorous tests we conduct to ensure every drop of milk is safe and nutritious.</p>
+        </div>
+
+        <div class="flex justify-center border-b border-gray-200 mb-8">
+            <button @click="tab = 'quality'" :class="{ 'border-heritage-green text-heritage-green': tab === 'quality', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'quality' }" class="py-4 px-6 block font-medium text-center border-b-2 transition-colors">
+                Quality & Safety
+            </button>
+            <button @click="tab = 'adulteration'" :class="{ 'border-heritage-green text-heritage-green': tab === 'adulteration', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'adulteration' }" class="py-4 px-6 block font-medium text-center border-b-2 transition-colors">
+                Adulteration
+            </button>
+        </div>
+
+        <div class="transition-all">
+            <div x-show="tab === 'quality'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in awareness_data.quality_safety %}
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-3">{{ item.test }}</h3>
+                    <p class="text-sm text-gray-600"><strong class="text-gray-700">Purpose:</strong> {{ item.purpose }}</p>
+                    <p class="text-sm text-gray-600 mt-2"><strong class="text-gray-700">Significance:</strong> {{ item.significance }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div x-show="tab === 'adulteration'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in awareness_data.adulteration %}
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-3">{{ item.test }}</h3>
+                    <p class="text-sm text-gray-600"><strong class="text-gray-700">Purpose:</strong> {{ item.purpose }}</p>
+                    <p class="text-sm text-gray-600 mt-2"><strong class="text-gray-700">Significance:</strong> {{ item.significance }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

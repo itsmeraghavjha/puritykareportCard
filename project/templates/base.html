@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Heritage Foods</title>
+    
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="{{ url_for('main.uploaded_file', filename='heritage-logo.png') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .heritage-green { color: #0A8445; }
+        .bg-heritage-green { background-color: #0A8445; }
+        .hover\:bg-heritage-green-dark:hover { background-color: #086F3A; }
+        .focus\:ring-heritage-green:focus { --tw-ring-color: #0A8445; }
+        .border-heritage-green { border-color: #0A8445; }
+        
+        .heritage-red { color: #D82232; }
+        .bg-heritage-red { background-color: #D82232; }
+        .hover\:bg-heritage-red-dark:hover { background-color: #B91C2A; }
+
+        .heritage-orange { color: #f7941e; }
+        .bg-heritage-orange { background-color: #f7941e; }
+
+        /* --- BEGIN CRITICAL CHANGES FOR FORM FIELD CONSISTENCY --- */
+
+        /* Base styling for all relevant input types and select, with !important overrides */
+        input[type="password"],
+        input[type="text"],
+        input[type="date"],
+        select {
+            /* Force reset native appearance aggressively */
+            -webkit-appearance: none !important; /* Crucial for iOS/WebKit consistency */
+            -moz-appearance: none !important;    /* For Firefox consistency */
+            appearance: none !important;         /* Standard property override */
+            
+            /* Apply consistent visual styling */
+            background: white !important;   /* Force white background using shorthand */
+            border-width: 1px !important;
+            border-color: #d1d5db !important;
+            border-radius: 0.375rem !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            
+            /* Ensure consistent height and width through padding, line-height, and width */
+            padding: 0.75rem 1rem !important;    /* Consistent padding for touch targets */
+            display: block !important;
+            width: 100% !important;              /* Force 100% width */
+            height: 3rem !important;             /* FORCE EXPLICIT HEIGHT */
+            font-size: 1rem !important;
+            line-height: 1.5rem !important;      /* Consistent line-height */
+            box-sizing: border-box !important;   /* Force consistent box model */
+            margin: 0 !important; /* Remove any default margins */
+        }
+
+        /* Specific styles to remove default dropdown arrow on select */
+        select {
+            background-image: none !important; /* Force remove default arrow image */
+            padding-right: 0.75rem !important; /* Adjust padding to match text input and remove space for default arrow */
+        }
+
+        /* For date inputs, specifically target the pseudo-elements that might show native calendar icons */
+
+
+        /* Consistent focus styles for all targeted form elements */
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: 2px solid transparent !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 2px #0A8445, 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            border-color: #0A8445 !important;
+        }
+        /* in your stylesheet */
+.video-container {
+  padding-top: 177.77%; /* default for mobile */
+}
+@media (min-width: 768px) {
+  .video-container {
+    padding-top: 56.25%; /* 16:9 for desktop */
+  }
+}
+
+        /* --- END CRITICAL CHANGES --- */
+
+        .header-logo {
+            height: 32px;
+            width: auto;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    
+<header class="bg-white shadow-md sticky top-0 z-50">
+    <div class="bg-heritage-green h-1.5"></div>
+    <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16 relative">
+            
+            <div class="flex-shrink-0 flex items-center -mt-4 -mb-4">
+                <a href="{{ url_for('main.index') }}" title="Home" class="flex items-center">
+                    <img src="{{ url_for('static', filename='heritage-logo.png') }}" 
+                         alt="Heritage Foods Logo" 
+                         class="h-20 sm:h-24 md:h-28 w-auto transition-all duration-300"
+                         onerror="this.onerror=null;this.src='https://placehold.co/200x60/ffffff/004b8d?text=Heritage+Foods';">
+                </a>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                {% if current_user.is_authenticated %}
+                    <span class="hidden sm:inline text-gray-600 text-sm">
+                        Welcome, {{ current_user.username }}
+                    </span>
+                    {% if current_user.role == 'superadmin' %}
+                        <a href="{{ url_for('main.superadmin_dashboard') }}" class="text-gray-700 hover:text-heritage-green font-medium">Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('main.qa_dashboard') }}" class="text-gray-700 hover:text-heritage-green font-medium">Dashboard</a>
+                    {% endif %}
+                    <a href="{{ url_for('main.qa_logout') }}" class="text-gray-700 hover:text-heritage-green font-medium">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('main.qa_login') }}" 
+                       class="bg-heritage-green text-white font-bold py-2 px-5 rounded-lg hover:bg-heritage-green-dark transition-colors shadow-sm text-sm">
+                        QA Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for category, message in messages %}
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                    class="p-4 rounded-md text-sm"
+                    :class="{ 'bg-green-100 border border-green-200 text-green-800': '{{ category }}' === 'success',
+                                'bg-red-100 border border-red-200 text-red-800': '{{ category }}' === 'danger',
+                                'bg-blue-100 border border-blue-200 text-blue-800': '{{ category }}' === 'info' }">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-heritage-green text-white">
+    <div class="bg-heritage-green">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            &copy; {{ current_year }} Heritage Foods Limited. All Rights Reserved.
+        </div>
+    </div>
+    <div class="bg-[#086F3A] h-1.5"></div>
+</footer>
+
+{% block scripts %}
+<script>
+    // Best Practice: Wait for the entire HTML document to be loaded before running the script.
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Find the element that will contain the video.
+        const videoWrapper = document.getElementById('video-wrapper');
+
+        // Only proceed if the video container exists on this page.
+        if (videoWrapper) {
+            
+            // This function dynamically adds the YouTube API script to the page.
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var player;
+
+            // This global function is required by the YouTube API. 
+            // It will be called automatically when the API script is loaded and ready.
+            window.onYouTubeIframeAPIReady = function() {
+                // The video ID for the YouTube Short.
+                const videoIdToUse = 'oV_1uyA2c0w'; 
+
+                player = new YT.Player('youtube-player', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: videoIdToUse,
+                    playerVars: {
+                        'playsinline': 1,
+                        'controls': 1,
+                        'rel': 0,
+                        'modestbranding': 1,
+                        'origin': window.location.origin,
+                        'loop': 1,
+                        'playlist': videoIdToUse
+                    },
+                    events: {
+                        'onReady': onPlayerReady
+                    }
+                });
+            }
+
+            // This function is called once the YouTube player has been successfully created.
+            function onPlayerReady(event) {
+                // Mute the video to allow modern browsers to autoplay it.
+                event.target.mute();
+
+                // Create an "observer" to watch for when the video comes into view.
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        // If the video element is on screen...
+                        if (entry.isIntersecting) {
+                            player.playVideo(); // ...play it.
+                        } else {
+                            player.pauseVideo(); // ...otherwise, pause it.
+                        }
+                    });
+                }, { 
+                    threshold: 0.5 // Trigger when 50% of the video is visible.
+                });
+                
+                // Tell the observer to start watching the video's wrapper element.
+                observer.observe(videoWrapper);
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+
+</body>
+</html>

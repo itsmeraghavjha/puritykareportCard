@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Wise Test Report</title>
+    <style>
+        /* A4 size and margin for PDF rendering */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.2;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: avoid;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 2px 3px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* Top Header Container */
+        .top-container {
+            border: none;
+            margin-bottom: 5px;
+            padding: 0;
+        }
+        .top-header {
+            border: none;
+        }
+        .top-header td {
+            border: none;
+            vertical-align: middle;
+            padding: 5px 0;
+        }
+        .top-header h2 {
+            font-family: Calibri, sans-serif;
+            font-size: 14pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 0;
+            white-space: nowrap;
+        }
+        .top-header img {
+            height: 60px;
+            width: auto;
+            display: block;
+        }
+        
+        .top-header .heritage-logo {
+    width: 140px;      /* wider */
+    height: 100px;      /* fixed smaller height */
+    object-fit: contain; /* prevents distortion */
+    display: block;
+}
+        .top-header .purity-logo {
+            margin-right: 5px;
+        }
+
+        /* Introductory Paragraph Box */
+        .intro-text-box {
+            border: 1px solid black;
+            padding: 8px 10px;
+            margin-bottom: 0; /* Removed margin to connect border */
+            text-align: center;
+        }
+        .intro-text-box p {
+            font-size: 9pt;
+            line-height: 1.3;
+            margin: 0; /* Remove default paragraph margin */
+        }
+        
+        /* Info Table */
+        .info-table {
+            border: 1px solid black;
+            margin-top: 10px; /* Added margin to create space */
+            margin-bottom: 0;
+        }
+        .info-table td { font-size: 9pt; padding: 2px 5px; }
+        .info-table .main-header {
+            font-size: 10pt;
+            font-weight: bold;
+            background-color: #FFFF00;
+            text-align: center;
+        }
+        .info-table .sub-header {
+            font-weight: bold;
+            background-color: #FFFF00;
+            text-align: left;
+            padding-left: 5px;
+        }
+        .info-table .data-label {
+            font-weight: bold;
+            text-align: left;
+            padding-left: 5px;
+            width: 25%;
+        }
+        .info-table .data-value {
+            text-align: center;
+            font-weight: bold;
+            width: 25%;
+        }
+        .coa-header {
+            font-weight: bold;
+            font-size: 10pt;
+            background-color: #FFFF00;
+            text-align: center;
+        }
+
+        /* Results Table Styling */
+        .results-table {
+            font-size: 9pt;
+            border-top: none;
+        }
+        .results-table th {
+            font-weight: bold;
+            background-color: #F2F2F2;
+            padding: 3px;
+        }
+        .results-table .param-col {
+            text-align: left;
+            padding-left: 5px;
+        }
+        .results-table .result-value {
+            font-weight: bold;
+        }
+        .results-table td, .results-table th {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Signature Block */
+        .signature-block {
+            text-align: right;
+            margin-top: 15px;
+            page-break-inside: avoid;
+            font-size: 9pt;
+        }
+        .signature-block img {
+            width: 100px;
+            height: auto;
+            max-height: 35px;
+            display: block;
+            margin-left: auto;
+            margin-bottom: -5px;
+        }
+        .signature-block p {
+            margin: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <table class="top-container">
+            <tbody>
+                <tr class="top-header">
+                    <td style="width: 25%; text-align: left;">
+                        <img src="{{ url_for('static', filename='heritage-logo.png', _external=True) }}" alt="Heritage Logo" class="heritage-logo">
+                    </td>
+                    <td style="width: 50%; text-align: center;">
+                        <h2>BATCH WISE - TEST REPORT</h2>
+                    </td>
+                    <td style="width: 25%; text-align: right;">
+                        <img src="{{ url_for('static', filename='purity-logo.png', _external=True) }}" alt="Purity Logo" class="purity-logo">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="intro-text-box">
+            <p class="intro-text">
+                Each batch of milk is rigorously tested to ensure purity, safety, and nutrition. From arrival to dispatch, it’s screened for key quality markers like fat, protein, microbial safety &amp; adulterants. With advanced technology and expert care, only milk that meets the highest standards reaches your home.
+            </p>
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td colspan="4" class="main-header">Heritage Foods Limited QA Department</td>
+            </tr>
+            <tr>
+                <td class="sub-header">Unit:</td>
+                <td class="data-value" colspan="3">{{ report.plant_name }}</td>
+            </tr>
+            <tr>
+                <td class="data-label">Product Name</td>
+                <td colspan="3" class="data-value">{{ report.product.name }}</td>
+            </tr>
+            <tr>
+                <td class="data-label">Batch No.</td>
+                <td class="data-value">{{ report.batch_code }}{{ machine_code }}</td>
+                <td class="data-label">Use by date</td>
+                <td class="data-value">{{ report.expiry_date.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="coa-header">Certificate of Analysis</td>
+            </tr>
+        </table>
+
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th style="width: 7%;">S.No</th>
+                    <th style="width: 25%;">Parameters</th>
+                    <th style="width: 30%;">Specifications</th>
+                    <th style="width: 18%;">Results</th>
+                    <th style="width: 20%;">Methods /reference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="param-col">{{ result.template.parameter }}</td>
+                    <td>{{ result.template.specification }}</td>
+                    <td class="result-value">{{ result.result_value }}</td>
+                    <td>{{ result.template.method }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="signature-block">
+            {% if report.creator and report.creator.signature_filename %}
+                <img src="{{ url_for('main.uploaded_file', filename=report.creator.signature_filename, _external=True) }}" alt="Signature">
+            {% else %}
+                <div style="height: 35px;"></div>
+            {% endif %}
+            <p>Plant QA Incharge</p>
+        </div>
+    </div>
+</body>
+</html>
