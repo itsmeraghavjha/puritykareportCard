@@ -13,8 +13,8 @@ COMMAND = [
     "-m", "hypercorn",
     "wsgi:application",
     "--bind", "0.0.0.0:8085",
-    "--certfile", r"D:\certs\7db886ac63f4bfb8.pem",
-    "--keyfile", r"D:\certs\privateKey.key"
+    # "--certfile", r"D:\certs\7db886ac63f4bfb8.pem",
+    # "--keyfile", r"D:\certs\privateKey.key"
 ]
 
 # The specific time of day to restart the server.

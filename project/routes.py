@@ -128,36 +128,42 @@ from datetime import date # This import can be removed if not used elsewhere in 
 
 
 # BEST PRACTICE: Replace the entire 'index' function with this robust version.
+# project/routes.py
+
+# ... (all your imports should be at the top)
+
+# BEST PRACTICE: Replace the entire 'index' function with this new version.
 @bp.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        sku = request.form.get('sku')
-        full_batch_code = request.form.get('batch-code', '').strip()
+        # Get the one and only input, and standardize it
+        full_batch_code = request.form.get('batch-code', '').strip().upper()
 
         # Centralized input validation
-        if not sku or len(full_batch_code) < 5:
-            error = "Please select a product and enter a valid Batch Code (at least 6 characters)."
-            return render_template('public/index.html', products=Product.query.all(), awareness_data=AWARENESS_DATA, error=error)
+        if not full_batch_code or len(full_batch_code) < 5:
+            error = "Please enter a valid Batch Code (at least 5 characters)."
+            # Note: We no longer pass 'products' to the template
+            return render_template('public/index.html', awareness_data=AWARENESS_DATA, error=error)
 
         # Clean, predictable logic for splitting the code
         base_code = full_batch_code[:5]
         machine_code = full_batch_code[5:]
 
-        product = Product.query.filter_by(sku=sku).first()
-        report = None
-        if product:
-            report = QualityReport.query.filter_by(
-                product_id=product.id,
-                batch_code=base_code,
-            ).order_by(QualityReport.created_at.desc()).first()
-
+        # --- THIS IS THE KEY LOGIC CHANGE ---
+        # We no longer filter by product/SKU. We find the report
+        # directly by its 5-digit base batch code.
+        report = QualityReport.query.filter_by(
+            batch_code=base_code
+        ).order_by(QualityReport.created_at.desc()).first()
+        
+        # --- The rest of the logic is the same as before ---
         if report:
             # Case 1: The report is linked to specific machine codes.
             if report.machine_codes:
                 # If machine codes exist in the report, the user MUST enter one.
                 if not machine_code:
                     error = f"This product requires a full batch code (e.g., {base_code}A1). Please enter the complete code."
-                    return render_template('public/index.html', products=Product.query.all(), awareness_data=AWARENESS_DATA, error=error)
+                    return render_template('public/index.html', awareness_data=AWARENESS_DATA, error=error)
 
                 allowed_codes = {code.strip() for code in report.machine_codes.split(',') if code.strip()}
                 if machine_code in allowed_codes:
@@ -169,20 +175,20 @@ def index():
                  # If no machine codes are on the report, the user must NOT have entered one.
                 if machine_code:
                     error = "This batch code does not have a machine-specific ID. Please enter only the 5-digit batch code."
-                    return render_template('public/index.html', products=Product.query.all(), awareness_data=AWARENESS_DATA, error=error)
+                    return render_template('public/index.html', awareness_data=AWARENESS_DATA, error=error)
 
                 ordered_results = report.results.join(ReportTemplate).order_by(ReportTemplate.order).all()
                 return render_template('public/report.html', report=report, results=ordered_results, machine_code=machine_code)
 
         # If no valid report is found after all checks, show a clear error.
-        error = "No report found. Please check the product and batch code details and try again."
-        return render_template('public/index.html', products=Product.query.all(), awareness_data=AWARENESS_DATA, error=error)
+        error = "No report found. Please check the batch code and try again."
+        return render_template('public/index.html', awareness_data=AWARENESS_DATA, error=error)
 
     # For GET requests, render the initial page.
-    return render_template('public/index.html', products=Product.query.all(), awareness_data=AWARENESS_DATA)
+    # We no longer need to query and pass 'products' here either.
+    return render_template('public/index.html', awareness_data=AWARENESS_DATA)
 
-
-
+# ... (rest of your routes.py file)
 
 from urllib.parse import urlparse # Make sure to import this
 

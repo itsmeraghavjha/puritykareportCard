@@ -1,97 +1,112 @@
-<!-- templates/public/index.html -->
-<!-- The main landing page for consumers to search for reports. -->
 {% extends "base.html" %}
 {% block title %}Purity Ka Report Card{% endblock %}
 
 {% block content %}
-<div class="space-y-16 md:space-y-24">
-    <!-- Hero Section with Search Form -->
-    <section class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <!-- Left side: Branding -->
-            <div class="p-8 md:p-12">
-                <img 
-                src="{{ url_for('static', filename='purity-logo.png') }}" 
-                alt="Purity Ka Report Card" 
-                class="max-w-full md:max-w-xs h-auto mx-auto md:mx-0 mb-6"
-                />
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">Check Your Milk's Report Card</h1>
-                <p class="text-lg text-gray-600 mt-3">Your trust is our priority. Enter the details from the product pack to view its quality report instantly.</p>
-            </div>
-            <!-- Right side: Search Form -->
-            <div class="bg-gray-50 p-8 md:p-12 h-full">
-                <form method="POST" action="{{ url_for('main.index') }}" class="space-y-6">
-    <!-- Product -->
-    <div>
-        <label for="sku" class="block text-sm font-semibold text-gray-700 mb-2">Product</label>
-        <select id="sku" name="sku" 
-            class="block w-full text-base px-4 py-3 rounded-xl border-gray-300 shadow-sm 
-                   focus:border-heritage-green focus:ring-heritage-green focus:ring-2 transition">
-            <option value="">Select a product</option>
-            {% for product in products %}
-            <option value="{{ product.sku }}">{{ product.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
 
-    <!-- Batch Code -->
-    <div>
-        <label for="batch-code" class="block text-sm font-semibold text-gray-700 mb-2">Batch Code</label>
-        <input type="text" id="batch-code" name="batch-code" 
-               placeholder="e.g. - SM17B1"
-               class="block w-full text-base px-4 py-3 rounded-xl border-gray-300 shadow-sm 
-                      focus:border-heritage-green focus:ring-heritage-green focus:ring-2 transition">
-    </div>
+<div class="flex items-center justify-center min-h-[75vh] py-8 md:py-12 px-4">
+    
+    <div class="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 bg-white shadow-2xl rounded-2xl overflow-hidden">
 
-    <!-- Button -->
-    <div class="pt-2">
-                        <button type="submit" class="w-full bg-heritage-green text-white font-bold text-lg py-3 px-4 rounded-lg hover:bg-heritage-green-dark transition-all transform hover:scale-105 shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300">
-                            View Report
-                        </button>
-                    </div>
-</form>
-                {% if error %}
-                <div class="mt-4 text-center text-red-700 bg-red-100 p-3 rounded-lg border border-red-200">
-                    <p class="font-medium">{{ error }}</p>
-                </div>
-                {% endif %}
-            </div>
+        <div class="bg-green-50 p-6 md:p-10 flex flex-col justify-center text-center md:text-left">
+            <img src="{{ url_for('static', filename='purity-logo.png') }}" 
+                 alt="Purity Ka Report Card" 
+                 class="w-full max-w-[280px] sm:max-w-xs mx-auto md:mx-0 mb-6 transform transition-transform hover:scale-105"/>
+            
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 leading-tight">
+                Check Your Milk's Report Card
+            </h1>
+            <p class="text-base text-gray-600 mt-4">
+                Your trust is our priority. Enter the details from the product pack to view its quality report instantly.
+            </p>
         </div>
-    </section>
 
-    <!-- MODIFIED: Changed md:max-w-5xl to md:max-w-3xl to make it smaller on desktop -->
-    <section class="max-w-md md:max-w-3xl mx-auto">
+        <div class="p-6 md:p-10 flex flex-col justify-center">
+            <form method="POST" action="{{ url_for('main.index') }}" class="w-full">
+                <div class="mb-5">
+                    <label for="batch-code" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Batch Code
+                    </label>
+                    <input type="text" id="batch-code" name="batch-code" 
+                           placeholder="e.g. SM17B1"
+                           class="block w-full text-base font-mono tracking-widest px-4 py-3 rounded-lg border-gray-300 shadow-sm 
+                                  focus:border-heritage-green focus:ring-heritage-green focus:ring-2 transition uppercase"
+                           required
+                           autofocus>
+                </div>
+                <div class="pt-2 mb-8">
+                    <button type="submit" 
+                            class="w-full bg-heritage-green text-white font-bold text-base py-3 px-4 rounded-lg hover:bg-heritage-green-dark 
+                                   transition-all transform hover:scale-105 shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300
+                                   flex items-center justify-center space-x-2">
+                        <span>View Report</span>
+                        <span aria-hidden="true" class="ml-1">&rarr;</span>
+                    </button>
+                </div>
+            </form>
+            
+            {% if error %}
+            <div class="mt-4 text-center text-red-700 bg-red-100 p-4 rounded-lg border border-red-200">
+                <p class="font-medium">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <div class="flex flex-wrap justify-center sm:justify-between items-center text-sm text-gray-600 mt-8 gap-4">
+                <span class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 18c1.657 0 3.123-.311 4.516-.867l-2.08-2.08a2.5 2.5 0 01-3.536-3.536L5.05 5.05A11.954 11.954 0 002.166 4.999zM10 1.18A11.953 11.953 0 0117.834 5a11.953 11.953 0 01-2.926 7.834L10 17.764l-4.908-4.908A11.953 11.953 0 0110 1.18z" clip-rule="evenodd" />
+                    </svg>
+                    Verified
+                </span>
+                <span class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Quality Tested
+                </span>
+                <span class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                    </svg>
+                    Certified
+                </span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<section class="py-12 md:py-16 bg-white shadow-inner">
+    <div class="max-w-5xl mx-auto px-4">
         <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold text-gray-800">A Promise of Purity, From Our Family to Yours</h2>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">A Promise of Purity, From Our Family to Yours</h2>
             <p class="text-gray-600 mt-2 max-w-2xl mx-auto">See the care and dedication that goes into every drop of Heritage milk.</p>
         </div>
-        
-        <div id="video-wrapper" class="bg-white p-2 rounded-xl shadow-lg overflow-hidden">
-  <div class="relative w-full h-0 video-container">
-      <div id="youtube-player" class="absolute top-0 left-0 w-full h-full"></div>
-  </div>
-</div>
-    </section>
-
-
-    <!-- Consumer Awareness Section -->
-    <section x-data="{ tab: 'quality' }" class="max-w-5xl mx-auto">
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold text-gray-800">Our Commitment to Purity</h2>
-            <p class="text-gray-600 mt-2 max-w-2xl mx-auto">We believe in complete transparency. Learn more about the rigorous tests we conduct to ensure every drop of milk is safe and nutritious.</p>
+        <div id="video-wrapper" class="max-w-3xl mx-auto bg-white p-2 rounded-xl shadow-lg overflow-hidden">
+            <div class="relative w-full h-0 video-container">
+                <div id="youtube-player" class="absolute top-0 left-0 w-full h-full"></div>
+            </div>
         </div>
+    </div>
+</section>
 
-        <!-- Tabs -->
+<section x-data="{ tab: 'quality' }" class="py-12 md:py-16">
+    
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Our Commitment to Purity</h2>
+            <p class="text-gray-600 mt-2 max-w-2xl mx-auto">We believe in complete transparency. Learn more about the rigorous tests we conduct.</p>
+        </div>
+        
         <div class="flex justify-center border-b border-gray-200 mb-8">
-            <button @click="tab = 'quality'" :class="{ 'border-heritage-green text-heritage-green': tab === 'quality', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'quality' }" class="py-4 px-6 block font-medium text-center border-b-2 transition-colors">
+            <button @click="tab = 'quality'" :class="{ 'border-heritage-green text-heritage-green': tab === 'quality', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'quality' }" class="py-4 px-4 sm:px-6 block font-medium text-center border-b-2 transition-colors text-sm sm:text-base">
                 Quality & Safety
             </button>
-            <button @click="tab = 'adulteration'" :class="{ 'border-heritage-green text-heritage-green': tab === 'adulteration', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'adulteration' }" class="py-4 px-6 block font-medium text-center border-b-2 transition-colors">
+            <button @click="tab = 'adulteration'" :class="{ 'border-heritage-green text-heritage-green': tab === 'adulteration', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'adulteration' }" class="py-4 px-4 sm:px-6 block font-medium text-center border-b-2 transition-colors text-sm sm:text-base">
                 Adulteration
             </button>
         </div>
 
-        <!-- Tab Content -->
         <div class="transition-all">
             <div x-show="tab === 'quality'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for item in awareness_data.quality_safety %}
@@ -106,13 +121,12 @@
                 {% for item in awareness_data.adulteration %}
                 <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
                     <h3 class="font-semibold text-lg text-gray-800 mb-3">{{ item.test }}</h3>
-                    <p class="text-sm text-gray-600"><strong class="text-gray-700">Purpose:</strong> {{ item.purpose }}</p>
+                    <p class="text-sm text-gray-600"><strong class="text-gray-700">Purpose:</strong> {{ item.purpose }}</s tron g></p>
                     <p class="text-sm text-gray-600 mt-2"><strong class="text-gray-700">Significance:</strong> {{ item.significance }}</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </section>
-</div>
+    </div>
+</section>
 {% endblock %}
-

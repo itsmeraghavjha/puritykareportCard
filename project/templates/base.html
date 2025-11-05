@@ -11,14 +11,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <link rel="icon" href="{{ url_for('main.uploaded_file', filename='heritage-logo.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='heritage-logo.png') }}">
+    
     
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     <style>
         body { 
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f8fafc; /* Default background for internal pages */
         }
         .heritage-green { color: #0A8445; }
         .bg-heritage-green { background-color: #0A8445; }
@@ -33,46 +34,35 @@
         .heritage-orange { color: #f7941e; }
         .bg-heritage-orange { background-color: #f7941e; }
 
-        /* --- BEGIN CRITICAL CHANGES FOR FORM FIELD CONSISTENCY --- */
-
-        /* Base styling for all relevant input types and select, with !important overrides */
+        /* --- Form Field Consistency --- */
         input[type="password"],
         input[type="text"],
         input[type="date"],
         select {
-            /* Force reset native appearance aggressively */
-            -webkit-appearance: none !important; /* Crucial for iOS/WebKit consistency */
-            -moz-appearance: none !important;    /* For Firefox consistency */
-            appearance: none !important;         /* Standard property override */
-            
-            /* Apply consistent visual styling */
-            background: white !important;   /* Force white background using shorthand */
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background: white !important;
             border-width: 1px !important;
             border-color: #d1d5db !important;
             border-radius: 0.375rem !important;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-            
-            /* Ensure consistent height and width through padding, line-height, and width */
-            padding: 0.75rem 1rem !important;    /* Consistent padding for touch targets */
+            padding: 0.75rem 1rem !important;
             display: block !important;
-            width: 100% !important;              /* Force 100% width */
-            height: 3rem !important;             /* FORCE EXPLICIT HEIGHT */
+            width: 100% !important;
+            height: 3rem !important;
             font-size: 1rem !important;
-            line-height: 1.5rem !important;      /* Consistent line-height */
-            box-sizing: border-box !important;   /* Force consistent box model */
-            margin: 0 !important; /* Remove any default margins */
+            line-height: 1.5rem !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
         }
-
-        /* Specific styles to remove default dropdown arrow on select */
         select {
-            background-image: none !important; /* Force remove default arrow image */
-            padding-right: 0.75rem !important; /* Adjust padding to match text input and remove space for default arrow */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem !important;
         }
-
-        /* For date inputs, specifically target the pseudo-elements that might show native calendar icons */
-
-
-        /* Consistent focus styles for all targeted form elements */
         input[type="password"]:focus,
         input[type="text"]:focus,
         input[type="date"]:focus,
@@ -82,17 +72,27 @@
             box-shadow: 0 0 0 2px #0A8445, 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
             border-color: #0A8445 !important;
         }
-        /* in your stylesheet */
-.video-container {
-  padding-top: 177.77%; /* default for mobile */
-}
-@media (min-width: 768px) {
-  .video-container {
-    padding-top: 56.25%; /* 16:9 for desktop */
-  }
-}
+        /* --- End Form Fixes --- */
 
-        /* --- END CRITICAL CHANGES --- */
+        /* ===== NEW: Premium Gradient Background for Homepage ===== */
+        .public-bg {
+            /* This is the very light green background from your screenshot */
+            background-color: #f0fdf4; 
+        }
+        main {
+            position: relative;
+            z-index: 10;
+        }
+        /* ===== END OF CSS TO ADD ===== */
+
+        .video-container {
+            padding-top: 177.77%;
+        }
+        @media (min-width: 768px) {
+            .video-container {
+                padding-top: 56.25%;
+            }
+        }
 
         .header-logo {
             height: 32px;
@@ -101,7 +101,8 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+
+<body class="flex flex-col min-h-screen {% if request.endpoint == 'main.index' %}public-bg{% endif %}">
     
 <header class="bg-white shadow-md sticky top-0 z-50">
     <div class="bg-heritage-green h-1.5"></div>
@@ -113,7 +114,7 @@
                     <img src="{{ url_for('static', filename='heritage-logo.png') }}" 
                          alt="Heritage Foods Logo" 
                          class="h-20 sm:h-24 md:h-28 w-auto transition-all duration-300"
-                         onerror="this.onerror=null;this.src='https://placehold.co/200x60/ffffff/004b8d?text=Heritage+Foods';">
+                         onerror="this.onerror=null;this.src='https-placehold.co/200x60/ffffff/004b8d?text=Heritage+Foods';">
                 </a>
             </div>
 
@@ -160,85 +161,54 @@
     </main>
 
     <footer class="bg-heritage-green text-white">
-    <div class="bg-heritage-green">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
             &copy; {{ current_year }} Heritage Foods Limited. All Rights Reserved.
-        </div>
-    </div>
-    <div class="bg-[#086F3A] h-1.5"></div>
-</footer>
+            </div>
+        <div class="bg-[#086F3A] h-1.5"></div>
+    </footer>
 
 {% block scripts %}
 <script>
-    // Best Practice: Wait for the entire HTML document to be loaded before running the script.
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // Find the element that will contain the video.
         const videoWrapper = document.getElementById('video-wrapper');
-
-        // Only proceed if the video container exists on this page.
         if (videoWrapper) {
-            
-            // This function dynamically adds the YouTube API script to the page.
             var tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
             var player;
-
-            // This global function is required by the YouTube API. 
-            // It will be called automatically when the API script is loaded and ready.
             window.onYouTubeIframeAPIReady = function() {
-                // The video ID for the YouTube Short.
                 const videoIdToUse = 'oV_1uyA2c0w'; 
-
                 player = new YT.Player('youtube-player', {
                     height: '100%',
                     width: '100%',
                     videoId: videoIdToUse,
                     playerVars: {
-                        'playsinline': 1,
-                        'controls': 1,
-                        'rel': 0,
-                        'modestbranding': 1,
-                        'origin': window.location.origin,
-                        'loop': 1,
-                        'playlist': videoIdToUse
+                        'playsinline': 1, 'controls': 1, 'rel': 0, 'modestbranding': 1,
+                        'origin': window.location.origin, 'loop': 1, 'playlist': videoIdToUse
                     },
-                    events: {
-                        'onReady': onPlayerReady
-                    }
+                    events: { 'onReady': onPlayerReady }
                 });
             }
 
-            // This function is called once the YouTube player has been successfully created.
             function onPlayerReady(event) {
-                // Mute the video to allow modern browsers to autoplay it.
                 event.target.mute();
-
-                // Create an "observer" to watch for when the video comes into view.
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
-                        // If the video element is on screen...
                         if (entry.isIntersecting) {
-                            player.playVideo(); // ...play it.
+                            player.playVideo();
                         } else {
-                            player.pauseVideo(); // ...otherwise, pause it.
+                            player.pauseVideo();
                         }
                     });
-                }, { 
-                    threshold: 0.5 // Trigger when 50% of the video is visible.
-                });
-                
-                // Tell the observer to start watching the video's wrapper element.
+                }, { threshold: 0.5 });
                 observer.observe(videoWrapper);
             }
         }
     });
 </script>
 {% endblock %}
-
 
 </body>
 </html>
