@@ -49,6 +49,9 @@
             <button @click="setActiveTab('plants')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'plants', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'plants' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Plants
             </button>
+            <button @click="setActiveTab('analytics')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'analytics', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'analytics' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Analytics
+            </button>
         </nav>
     </div>
 
@@ -71,6 +74,10 @@
 
         <div x-show="activeTab === 'plants'" x-cloak>
             {% include 'superadmin/_manage_plants.html' %}
+        </div>
+
+        <div x-show="activeTab === 'analytics'" x-cloak>
+            {% include 'superadmin/_manage_analytics.html' %}
         </div>
     </div>
 </div>

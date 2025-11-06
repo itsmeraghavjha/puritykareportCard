@@ -1,0 +1,178 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<script type="text/javascript">
+  // @ts-nocheck
+  window.ANALYTICS_DATA = JSON.parse('{{ analytics_data | tojson | safe }}');
+</script>
+
+<div class="space-y-8" x-data="analyticsDashboard()">
+
+    <h2 class="text-xl font-semibold text-gray-700">Consumer Traffic (Overall)</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-sm font-medium text-gray-500">Total Page Views</h3>
+            <p class="mt-2 text-3xl font-bold text-gray-800" x-text="ANALYTICS_DATA.total_page_views"></p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-sm font-medium text-gray-500">Total Report Views</h3>
+            <p class="mt-2 text-3xl font-bold text-gray-800" x-text="ANALYTICS_DATA.total_report_views"></p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-sm font-medium text-gray-500">Total Downloads</h3>
+            <p class="mt-2 text-3xl font-bold text-gray-800" x-text="ANALYTICS_DATA.total_downloads"></p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h3 class="text-sm font-medium text-gray-500">Unique Visitors (Approx.)</h3>
+            <p class="mt-2 text-3xl font-bold text-gray-800" x-text="ANALYTICS_DATA.unique_visitors"></p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold text-gray-700">Daily Traffic (Last 30 Days)</h2>
+            <div class="h-96">
+                <canvas id="trafficChart" x-ref="trafficChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold text-gray-700">Daily Engagement (Last 30 Days)</h2>
+            <div class="h-96">
+                <canvas id="engagementChart" x-ref="engagementChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+    <h2 class="text-xl font-semibold text-gray-700">Internal Database Stats</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h3 class="text-sm font-medium text-gray-500">Plants (Regions)</h3>
+            <p class="mt-1 text-3xl font-bold text-heritage-green" x-text="ANALYTICS_DATA.plant_count"></p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h3 class="text-sm font-medium text-gray-500">SKUs (Products)</h3>
+            <p class="mt-1 text-3xl font-bold text-heritage-green" x-text="ANALYTICS_DATA.product_count"></p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h3 class="text-sm font-medium text-gray-500">Total Templates</h3>
+            <p class="mt-1 text-3xl font-bold text-heritage-green" x-text="ANALYTICS_DATA.template_count"></p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h3 class="text-sm font-medium text-gray-500">Total Reports</h3>
+            <p class="mt-1 text-3xl font-bold text-heritage-green" x-text="ANALYTICS_DATA.total_reports"></p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h3 class="text-sm font-medium text-gray-500">QA Users</h3>
+            <p class="mt-1 text-3xl font-bold text-heritage-green" x-text="ANALYTICS_DATA.qa_user_count"></p>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+function analyticsDashboard() {
+    return {
+        // Get all data from the global window object
+        allData: window.ANALYTICS_DATA,
+        timeSeriesData: window.ANALYTICS_DATA.time_series_chart,
+
+        init() {
+            // Use $nextTick to make sure the charts draw correctly
+            // even when the tab is hidden with x-show
+            this.$nextTick(() => {
+                this.initTrafficChart();
+                this.initEngagementChart();
+                // Removed the conversion chart init
+            });
+        },
+
+        // --- CHART 1: Daily Traffic (Line) ---
+        initTrafficChart() {
+            if (!this.$refs.trafficChart) return;
+            const ctx = this.$refs.trafficChart.getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: this.timeSeriesData.labels,
+                    datasets: [
+                        {
+                            label: 'Page Views',
+                            data: this.timeSeriesData.page_views,
+                            borderColor: '#0A8445', // heritage-green
+                            backgroundColor: 'rgba(10, 132, 69, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: this.getChartOptions('Daily Page Views', false)
+            });
+        },
+
+        // --- CHART 2: Daily Engagement (Bar) ---
+        initEngagementChart() {
+            if (!this.$refs.engagementChart) return;
+            const ctx = this.$refs.engagementChart.getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: this.timeSeriesData.labels,
+                    datasets: [
+                        {
+                            label: 'Report Views',
+                            data: this.timeSeriesData.report_views,
+                            backgroundColor: '#f7941e', // heritage-orange
+                        },
+                        {
+                            label: 'Downloads',
+                            data: this.timeSeriesData.downloads,
+                            backgroundColor: '#D82232', // heritage-red
+                        }
+                    ]
+                },
+                // --- MODIFICATION: Set stacking to TRUE for the bar chart ---
+                options: this.getChartOptions('Daily User Actions', true)
+            });
+        },
+
+        // --- REMOVED Chart 3 (Conversion Funnel) ---
+
+        // Helper function to de-duplicate chart options
+        getChartOptions(title, isStacked = false) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: isStacked, // This is the key change
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: isStacked, // This is the key change
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                }
+            };
+        }
+    }
+}
+</script>

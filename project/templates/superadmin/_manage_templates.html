@@ -35,10 +35,16 @@
                             <td class="px-3 py-2" x-text="template.specification"></td>
                             <td class="px-3 py-2" x-text="template.method"></td>
                             <td class="px-3 py-2 text-center">
-                                <form :action="'/superadmin/templates/delete/' + template.id" method="POST" class="inline" onsubmit="return confirm('Delete this template?')">
-                                    <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                                
+                                <form :action="'/superadmin/templates/delete/' + template.id" 
+                                      method="POST" 
+                                      class="inline"
+                                      onsubmit="handleAsyncSubmit(this, 'Confirm Delete', 'Are you sure you want to delete this template?'); return false;">
+                                    <button type="submit" class="text-red-600 hover:underline">
+                                        Delete
+                                    </button>
                                 </form>
-                            </td>
+                                </td>
                         </tr>
                     </template>
                 </tbody>
@@ -58,7 +64,10 @@
         <h2 class="text-lg font-semibold text-gray-700 mb-3">Add Template</h2>
         <p class="text-sm text-gray-500 mb-3">Add a new test template to the selected product.</p>
         
-        <form :action="'/superadmin/templates/add/' + selectedProductId" method="POST" class="space-y-3">
+        <form :action="'/superadmin/templates/add/' + selectedProductId" 
+              method="POST" 
+              class="space-y-3"
+              x-ref="newTemplateForm">
             
             <div>
                 <label for="parameter_name" class="block text-sm text-gray-600">Parameter</label>
@@ -76,7 +85,9 @@
 
             <div>
                 <label class="block text-sm text-gray-600">Specification</label>
-                <input type="text" name="specification" required class="w-full p-2 border rounded-lg">
+                <input type="text" name="specification" required 
+                       class="w-full p-2 border rounded-lg"
+                       x-model="newSpecification">
             </div>
 
             <div>
@@ -88,9 +99,11 @@
 
             <div>
                 <label class="block text-sm text-gray-600">Order (e.g., 1, 2, 3)</label>
-                <input type="number" name="order" required class="w-full p-2 border rounded-lg" :value="templates.length + 1">
+                <input type="number" name="order" required 
+                       class="w-full p-2 border rounded-lg" 
+                       x-model="newOrder">
             </div>
-            
+
             <button type="submit" class="w-full bg-heritage-green text-white py-2 rounded-lg hover:bg-heritage-green-dark">
                 Save Template
             </button>
@@ -99,16 +112,17 @@
 </div>
 
 <script>
+    // This script is now simplified. It no longer needs the complex 'deleteTemplate' function.
     function templateManager() {
         return {
             selectedProductId: '',
             templates: [],
             loading: false,
-            // --- Autocomplete Properties ---
             masterParams: [],
             newParameterName: '',
             newMethodName: '',
-            // --- End Autocomplete ---
+            newSpecification: '',
+            newOrder: 1,
 
             fetchTemplates() {
                 if (!this.selectedProductId) {
@@ -120,15 +134,15 @@
                     .then(response => response.json())
                     .then(data => {
                         this.templates = data.templates.sort((a, b) => a.order - b.order);
+                        this.newOrder = this.templates.length + 1;
                         this.loading = false;
                     })
                     .catch(() => {
                         this.loading = false;
-                        alert('Error loading templates.');
+                        window.app.alert('Error', 'Error loading templates.');
                     });
             },
 
-            // --- Autocomplete Function: Loads the master list ---
             loadMasterParams() {
                 fetch(`/api/master_parameters`)
                     .then(response => response.json())
@@ -137,7 +151,6 @@
                     });
             },
 
-            // --- Autocomplete Function: Auto-fills the method ---
             paramSelected() {
                 const selected = this.masterParams.find(p => p.name === this.newParameterName);
                 if (selected) {

@@ -103,3 +103,19 @@ class ReportResult(db.Model):
     template_id = db.Column(db.Integer, db.ForeignKey('report_template.id'), nullable=False)
     result_value = db.Column(db.String(100), nullable=False)
     template = db.relationship('ReportTemplate')
+
+
+class AnalyticsEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # We will log: 'PAGE_VIEW', 'REPORT_VIEW', 'REPORT_DOWNLOAD'
+    event_type = db.Column(db.String(50), nullable=False, index=True) 
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # User data (anonymized for privacy)
+    ip_address = db.Column(db.String(100), nullable=True)
+    user_agent = db.Column(db.Text, nullable=True)
+
+    __table_args__ = (
+        db.Index('idx_event_timestamp', 'event_type', 'timestamp'),
+    )

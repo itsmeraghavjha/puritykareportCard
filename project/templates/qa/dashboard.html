@@ -3,20 +3,18 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <!-- Dashboard Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">QA Dashboard</h1>
             <p class="text-gray-600 mt-1">Welcome, {{ current_user.username }} ({{ current_user.plant_name }} Plant)</p>
         </div>
         <a href="{{ url_for('main.new_report') }}" class="mt-4 sm:mt-0 bg-heritage-green text-white font-bold py-2 px-5 rounded-lg hover:bg-heritage-green-dark transition-all shadow-md inline-flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             New Report
         </a>
     </div>
 
-    <!-- Recent Reports Card -->
-   <div class="overflow-x-auto">
+    <div class="overflow-x-auto">
     <table class="min-w-full">
         <thead>
             <tr class="border-b-2 border-gray-200">
@@ -28,7 +26,7 @@
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
-            {% for report in reports %}
+            {% for report in pagination.items %}
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-4 text-gray-700 align-top">{{ report.expiry_date.strftime('%d %b, %Y') }}</td>
                 <td class="px-4 py-4 text-gray-700 align-top">{{ report.product.name }}</td>
@@ -38,9 +36,6 @@
                         <div class="flex flex-wrap gap-1">
                             {% for code in report.machine_codes.split(',') %}
                                 {% if code.strip() %}
-                                    {#
-                                    MODIFICATION: Changed background to 'bg-heritage-green' and text to 'text-white'
-                                    #}
                                     <span class="inline-block bg-heritage-green text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                                         {{ code.strip() }}
                                     </span>
@@ -64,11 +59,57 @@
                     <p class="text-lg mt-4 font-semibold">No reports found.</p>
                     <p class="mt-1">Click the "+ New Report" button to get started.</p>
                 </td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+    <div class="mt-6 flex justify-between items-center">
+        <div class="text-sm text-gray-500">
+            Page <span class="font-medium">{{ pagination.page }}</span> of <span class="font-medium">{{ pagination.pages }}</span>.
+            (Total: <span class="font-medium">{{ pagination.total }}</span> reports)
+        </div>
+        
+        {% if pagination.pages > 1 %}
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <a href="{{ url_for('main.qa_dashboard', page=pagination.prev_num) if pagination.has_prev else '#' }}"
+               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium 
+                      {% if not pagination.has_prev %} text-gray-300 cursor-not-allowed {% else %} text-gray-500 hover:bg-gray-50 {% endif %}">
+                <span class="sr-only">Previous</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            </a>
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <a href="#" aria-current="page" class="z-10 bg-green-50 border-heritage-green text-heritage-green relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            {{ page_num }}
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('main.qa_dashboard', page=page_num) }}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                {% endif %}
+            {% endfor %}
+            
+            <a href="{{ url_for('main.qa_dashboard', page=pagination.next_num) if pagination.has_next else '#' }}"
+               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium 
+                      {% if not pagination.has_next %} text-gray-300 cursor-not-allowed {% else %} text-gray-500 hover:bg-gray-50 {% endif %}">
+                <span class="sr-only">Next</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+            </a>
+        </nav>
+        {% endif %}
+    </div>
     </div>
 </div>
 {% endblock %}

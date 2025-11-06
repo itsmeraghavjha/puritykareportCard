@@ -50,6 +50,21 @@
             </div>
 
             <div>
+                <label for="copy_from" class="block text-sm text-gray-600">Copy Templates From (Optional)</label>
+                <input type="text" 
+                       id="copy_from" 
+                       name="copy_from_product_name" 
+                       list="product-list"
+                       placeholder="Type to search..."
+                       class="w-full p-2 border rounded-lg focus:ring focus:ring-green-300">
+                
+                <datalist id="product-list">
+                    {% for product in products %}
+                    <option value="{{ product.name }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700">Available at Plants</label>
                 <div class="mt-2 p-3 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
                     <div class="space-y-1">

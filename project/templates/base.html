@@ -16,10 +16,72 @@
     
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('appModal', () => ({
+                isOpen: false,
+                title: 'Confirm',
+                message: 'Are you sure?',
+                isConfirm: false,
+                
+                _resolve: null,
+                _reject: null,
+
+                open(type, title, message) {
+                    this.isOpen = true;
+                    this.type = type;
+                    this.title = title;
+                    this.message = message;
+                    this.isConfirm = (type === 'confirm');
+                    
+                    return new Promise((resolve, reject) => {
+                        this._resolve = resolve;
+                        this._reject = reject;
+                    });
+                },
+
+                accept() {
+                    this.isOpen = false;
+                    this._resolve(true);
+                },
+                
+                cancel() {
+                    this.isOpen = false;
+                    this._resolve(false); 
+                }
+            }));
+        });
+
+        // Create a simple global helper object
+        window.app = {
+            alert(title, message) {
+                window.dispatchEvent(new CustomEvent('open-modal', { 
+                    detail: { type: 'alert', title, message }
+                }));
+            },
+            confirm(title, message) {
+                return window.dispatchEvent(new CustomEvent('open-modal', { 
+                    detail: { type: 'confirm', title, message }
+                })).detail;
+            }
+        };
+
+        // ---
+        // This is the global helper for all delete forms
+        // ---
+        async function handleAsyncSubmit(form, title, message) {
+            event.preventDefault(); 
+            
+            const confirmed = await window.app.confirm(title, message);
+            if (confirmed) {
+                form.submit();
+            }
+        }
+    </script>
     <style>
         body { 
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Default background for internal pages */
+            background-color: #f8fafc; 
         }
         .heritage-green { color: #0A8445; }
         .bg-heritage-green { background-color: #0A8445; }
@@ -74,16 +136,16 @@
         }
         /* --- End Form Fixes --- */
 
-        /* ===== NEW: Premium Gradient Background for Homepage ===== */
         .public-bg {
-            /* This is the very light green background from your screenshot */
             background-color: #f0fdf4; 
         }
         main {
             position: relative;
-            z-index: 10;
+            /* ---
+            THE FIX: 'z-index: 10;' is REMOVED from here.
+            ---
+            */
         }
-        /* ===== END OF CSS TO ADD ===== */
 
         .video-container {
             padding-top: 177.77%;
@@ -114,7 +176,7 @@
                     <img src="{{ url_for('static', filename='heritage-logo.png') }}" 
                          alt="Heritage Foods Logo" 
                          class="h-20 sm:h-24 md:h-28 w-auto transition-all duration-300"
-                         onerror="this.onerror=null;this.src='https-placehold.co/200x60/ffffff/004b8d?text=Heritage+Foods';">
+                         onerror="this.onerror=null;this.src='https://placehold.co/200x60/ffffff/004b8d?text=Heritage+Foods';">
                 </a>
             </div>
 
@@ -160,6 +222,76 @@
         {% block content %}{% endblock %}
     </main>
 
+    <div 
+        x-data="appModal()" 
+        @open-modal.window="open($event.detail.type, $event.detail.title, $event.detail.message)"
+        x-show="isOpen"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-[99] flex items-center justify-center p-4" 
+        style="display: none;"
+    >
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-75" @click="cancel()"></div>
+        
+        <div 
+            x-show="isOpen"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="relative bg-white p-6 sm:p-8 rounded-xl shadow-2xl max-w-md w-full mx-auto z-10"
+            @click.outside="cancel()"
+        >
+            <div class="flex items-start">
+                <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full"
+                     :class="{
+                        'bg-red-100': type === 'confirm',
+                        'bg-blue-100': type === 'alert'
+                     }">
+                    <svg x-show="isConfirm" class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <svg x-show="!isConfirm" class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                
+                <div class="ml-4 text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" x-text="title"></h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500" x-text="message"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <button 
+                    x-show="isConfirm"
+                    @click="cancel()"
+                    type="button" 
+                    class="bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition-all shadow-sm">
+                    Cancel
+                </button>
+                <button 
+                    @click="accept()"
+                    type="button" 
+                    class="font-bold py-2 px-5 rounded-lg transition-all shadow-sm"
+                    :class="{
+                        'bg-heritage-red text-white hover:bg-heritage-red-dark': isConfirm,
+                        'bg-heritage-green text-white hover:bg-heritage-green-dark': !isConfirm
+                    }">
+                    <span x-show="isConfirm">Confirm</span>
+                    <span x-show="!isConfirm">OK</span>
+                </button>
+            </div>
+        </div>
+    </div>
     <footer class="bg-heritage-green text-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
             &copy; {{ current_year }} Heritage Foods Limited. All Rights Reserved.
