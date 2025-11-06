@@ -323,7 +323,7 @@ def new_report():
         flash('New quality report created successfully!', 'success')
         return redirect(url_for('main.qa_dashboard'))
 
-    products = Product.query.all()
+    products = Product.query.join(Product.plants).filter(Plant.id == current_user.plant_id).order_by(Product.name).all()
     return render_template('qa/new_report.html', products=products)
 
 @bp.route('/qa/report/delete/<int:report_id>', methods=['POST'])
@@ -496,16 +496,35 @@ def edit_user(user_id):
 def new_product():
     name = request.form.get('product_name')
     sku = request.form.get('product_sku')
+    
+    # Get the list of plant IDs from the new checklist
+    selected_plant_ids = request.form.getlist('plants', type=int)
+
     if name and sku:
+        # Check if SKU already exists
+        if Product.query.filter_by(sku=sku).first():
+            flash(f'Error: Product SKU "{sku}" already exists.', 'danger')
+            return redirect(url_for('main.superadmin_dashboard', tab='products'))
+
         product = Product(name=name, sku=sku)
+        
+        # Find the Plant objects and associate them
+        if selected_plant_ids:
+            selected_plants = Plant.query.filter(Plant.id.in_(selected_plant_ids)).all()
+            product.plants = selected_plants
+        
         db.session.add(product)
         db.session.commit()
         flash(f'Product "{name}" created! Now, please add its test templates.', 'success')
-        # This is the new redirect, which passes the new product ID
+        
+        # This redirect is perfect, it will send the admin to the templates tab
         return redirect(url_for('main.superadmin_dashboard', tab='templates', product_id=product.id))
     else:
         flash('Product Name and SKU are required.', 'danger')
-    return redirect(url_for('main.superadmin_dashboard'))
+    
+    # Stay on the products tab if there was an error
+    return redirect(url_for('main.superadmin_dashboard', tab='products'))
+
 
 @bp.route('/superadmin/products/delete/<int:product_id>', methods=['POST'])
 @login_required
@@ -628,23 +647,40 @@ def delete_plant(plant_id):
     flash(f'Plant "{plant.name}" has been deleted.', 'success')
     return redirect(url_for('main.superadmin_dashboard'))
 
+# In project/routes.py, find the edit_product route
+
 @bp.route('/superadmin/products/edit/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
+    
     if request.method == 'POST':
         product.name = request.form.get('product_name')
         product.sku = request.form.get('product_sku')
+        
+        # 1. Get the list of plant IDs from the form
+        selected_plant_ids = request.form.getlist('plants', type=int)
+        
+        # 2. Find the actual Plant objects
+        selected_plants = Plant.query.filter(Plant.id.in_(selected_plant_ids)).all()
+        
+        # 3. Overwrite the product's plant list with the new one
+        product.plants = selected_plants
+        
         try:
             db.session.commit()
             flash(f'Product "{product.name}" updated successfully!', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error: Could not update product. SKU might already exist. {e}', 'danger')
-        return redirect(url_for('main.superadmin_dashboard'))
+            flash(f'Error: Could not update product. {e}', 'danger')
+        return redirect(url_for('main.superadmin_dashboard', tab='products')) # Go back to products tab
 
-    return render_template('superadmin/edit_product.html', product=product)
+    # 4. (FOR GET REQUEST) Fetch all plants to show in the form
+    all_plants = Plant.query.order_by(Plant.name).all()
+    
+    # 5. Pass all_plants to the template
+    return render_template('superadmin/edit_product.html', product=product, all_plants=all_plants)
 
 
 @bp.route('/superadmin/plants/edit/<int:plant_id>', methods=['GET', 'POST'])

@@ -16,8 +16,25 @@
                 <input type="text" name="product_sku" value="{{ product.sku }}"
                        class="w-full border rounded-lg px-3 py-2">
             </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Available at Plants</label>
+                <div class="mt-2 p-4 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                    <div class="space-y-2">
+                        {% set assigned_plant_ids = product.plants.all()|map(attribute='id')|list %}
+                        {% for plant in all_plants %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="plants" value="{{ plant.id }}"
+                                   {% if plant.id in assigned_plant_ids %}checked{% endif %}
+                                   class="h-4 w-4 text-heritage-green rounded border-gray-300 focus:ring-heritage-green">
+                            <span class="ml-2 text-sm text-gray-700">{{ plant.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
             <div class="pt-4 flex justify-end space-x-3">
-                <a href="{{ url_for('main.superadmin_dashboard') }}" class="bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300">Cancel</a>
+                <a href="{{ url_for('main.superadmin_dashboard', tab='products') }}" class="bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300">Cancel</a>
                 <button type="submit" 
                         class="bg-heritage-green text-white font-bold py-2 px-5 rounded-lg hover:bg-heritage-green-dark">
                     Save Changes

@@ -11,13 +11,25 @@
             <legend class="text-xl font-semibold text-gray-700 mb-4">1. Product Details</legend>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
-                    <label for="product_id" class="block text-sm font-medium text-gray-700">Product</label>
-                    <select id="product_id" name="product_id" x-model="productId" @change="$nextTick(() => fetchTemplates(productId))" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
-                        <option value="">Select a product</option>
+                    <label for="product_input" class="block text-sm font-medium text-gray-700">Product</label>
+                    <input type="text" id="product_input" 
+                           list="product_datalist"
+                           placeholder="Type to search for a product..."
+                           x-ref="product_input"
+                           @change="
+                                let selectedOption = document.querySelector('#product_datalist option[value=\'' + $event.target.value + '\']');
+                                productId = selectedOption ? selectedOption.dataset.id : '';
+                                $nextTick(() => fetchTemplates(productId));
+                           "
+                           class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+
+                    <datalist id="product_datalist">
                         {% for product in products %}
-                        <option value="{{ product.id }}">{{ product.name }}</option>
+                        <option data-id="{{ product.id }}" value="{{ product.name }}"></option>
                         {% endfor %}
-                    </select>
+                    </datalist>
+                    
+                    <input type="hidden" name="product_id" x-model="productId">
                 </div>
                 <div>
                     <label for="plant_name" class="block text-sm font-medium text-gray-700">Plant Name</label>

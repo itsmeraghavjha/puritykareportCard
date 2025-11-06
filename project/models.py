@@ -4,6 +4,14 @@ from datetime import datetime
 from . import db
 from sqlalchemy import UniqueConstraint
 
+
+
+# This table just holds the two foreign keys, linking the other tables.
+plant_product_association = db.Table('plant_product_association',
+    db.Column('plant_id', db.Integer, db.ForeignKey('plant.id'), primary_key=True),
+    db.Column('product_id', db.Integer, db.ForeignKey('product.id'), primary_key=True)
+)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -28,13 +36,17 @@ class Product(db.Model):
     name = db.Column(db.String(100), nullable=False)
     sku = db.Column(db.String(50), unique=True, nullable=False)
     templates = db.relationship('ReportTemplate', backref='product', lazy=True, cascade="all, delete-orphan")
+    plants = db.relationship('Plant', secondary=plant_product_association,
+                             back_populates='products', lazy='dynamic')
 
 class Plant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # Remove unique=True from here
     name = db.Column(db.String(100), nullable=False)
-    # Remove unique=True from here
     code = db.Column(db.String(50), nullable=False)
+
+    # --- ADD THIS RELATIONSHIP ---
+    products = db.relationship('Product', secondary=plant_product_association,
+                               back_populates='plants', lazy='dynamic')
 
     # Add this to explicitly name ALL unique constraints
     __table_args__ = (
