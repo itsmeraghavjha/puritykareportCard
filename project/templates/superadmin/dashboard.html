@@ -1,46 +1,74 @@
-<!-- templates/superadmin/dashboard.html -->
-<!-- The main dashboard for the Superadmin to manage the entire application. -->
 {% extends "base.html" %}
 {% block title %}Superadmin Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto" x-data="{ activeTab: 'qa-users' }">
-    <!-- Dashboard Header -->
+        <div classs="max-w-7xl mx-auto" x-data="{ 
+        activeTab: localStorage.getItem('superadmin_active_tab') || 'qa-users',
+        setActiveTab(tab) {
+            this.activeTab = tab;
+            localStorage.setItem('superadmin_active_tab', tab);
+        },
+        init() {
+            // Read URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            const productId = urlParams.get('product_id');
+
+            if (tab) {
+                this.setActiveTab(tab);
+            }
+            if (tab === 'templates' && productId) {
+                // Wait for the template manager to load, then set its product
+                this.$nextTick(() => {
+                    this.$dispatch('set-product-id', productId);
+                });
+            }
+        }
+    }">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Superadmin Dashboard</h1>
-            <p class="text-gray-600 mt-1">Manage QA users, products, and plants.</p>
+            <p class="text-gray-600 mt-1">Manage QA users, products, templates, and plants.</p>
         </div>
     </div>
 
-    <!-- Tab Navigation -->
     <div class="border-b border-gray-200">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-            <button @click="activeTab = 'qa-users'" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'qa-users', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'qa-users' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            <button @click="setActiveTab('qa-users')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'qa-users', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'qa-users' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 QA Users
             </button>
-            <button @click="activeTab = 'products'" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'products', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'products' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            <button @click="setActiveTab('products')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'products', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'products' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Products
             </button>
-            <button @click="activeTab = 'plants'" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'plants', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'plants' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            <button @click="setActiveTab('templates')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'templates', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'templates' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Templates
+            </button>
+            <button @click="setActiveTab('master_parameters')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'master_parameters', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'master_parameters' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Master Parameters
+            </button>
+            <button @click="setActiveTab('plants')" :class="{ 'border-heritage-green text-heritage-green': activeTab === 'plants', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'plants' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Plants
             </button>
         </nav>
     </div>
 
-    <!-- Tab Content -->
     <div class="mt-8">
-        <!-- QA Users Management -->
         <div x-show="activeTab === 'qa-users'" x-cloak>
             {% include 'superadmin/_manage_users.html' %}
         </div>
 
-        <!-- Products Management -->
         <div x-show="activeTab === 'products'" x-cloak>
             {% include 'superadmin/_manage_products.html' %}
         </div>
 
-        <!-- Plants Management -->
+        <div x-show="activeTab === 'templates'" x-cloak>
+            {% include 'superadmin/_manage_templates.html' %}
+        </div>
+
+        <div x-show="activeTab === 'master_parameters'" x-cloak>
+        {% include 'superadmin/_manage_master_parameters.html' %}
+        </div>
+
         <div x-show="activeTab === 'plants'" x-cloak>
             {% include 'superadmin/_manage_plants.html' %}
         </div>

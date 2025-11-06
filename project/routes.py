@@ -10,7 +10,7 @@ from datetime import datetime, date
 from functools import wraps
 
 from . import db
-from .models import Product, QualityReport, ReportTemplate, User, Plant, ReportResult
+from .models import Product, QualityReport, ReportTemplate, User, Plant, ReportResult, ParameterMaster
 from .data import AWARENESS_DATA
 from .utils import generate_report_pdf
 
@@ -366,16 +366,16 @@ def edit_report(report_id):
 def get_templates_for_product(product_id):
     product = Product.query.get_or_404(product_id)
     templates = ReportTemplate.query.filter_by(product_id=product.id).order_by(ReportTemplate.order).all()
-    
+
     template_list = [{
         'id': t.id,
         'parameter': t.parameter,
         'specification': t.specification,
-        'method': t.method
+        'method': t.method,
+        'order': t.order  # <-- THIS IS THE FIX
     } for t in templates]
-    
-    return jsonify({'templates': template_list})
 
+    return jsonify({'templates': template_list})
 
 # --- Superadmin Routes ---
 @bp.route('/superadmin/dashboard')
@@ -385,11 +385,13 @@ def superadmin_dashboard():
     qa_users = User.query.filter_by(role='qa').all()
     products = Product.query.all()
     plants = Plant.query.all()
+    master_parameters = ParameterMaster.query.order_by(ParameterMaster.name).all()
     all_reports = QualityReport.query.order_by(QualityReport.created_at.desc()).all()
     return render_template('superadmin/dashboard.html', 
                            qa_users=qa_users, 
                            products=products, 
-                           plants=plants, 
+                           plants=plants,
+                           master_parameters=master_parameters,
                            all_reports=all_reports)
 
 @bp.route('/superadmin/users/new', methods=['GET', 'POST'])
@@ -432,6 +434,62 @@ def delete_user(user_id):
     flash(f'User "{user.username}" has been deleted.', 'success')
     return redirect(url_for('main.superadmin_dashboard'))
 
+# ... (inside project/routes.py)
+
+@bp.route('/superadmin/users/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.role != 'qa':
+        flash('You can only edit QA users.', 'danger')
+        return redirect(url_for('main.superadmin_dashboard'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        plant_name = request.form.get('plant_name')
+        
+        # Check if username is being changed to one that already exists
+        existing_user = User.query.filter(User.username == username, User.id != user_id).first()
+        if existing_user:
+            flash('That username is already taken.', 'danger')
+            plants = Plant.query.all()
+            return render_template('superadmin/user_form.html', plants=plants, user=user, form_title="Edit QA User")
+
+        user.username = username
+        user.plant_name = plant_name
+        
+        # Only update password if a new one was provided
+        if password:
+            user.set_password(password)
+
+        signature_file = request.files.get('signature')
+        if signature_file and signature_file.filename != '':
+            # Delete old signature if it exists
+            if user.signature_filename:
+                try:
+                    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], user.signature_filename))
+                except OSError:
+                    pass # Ignore if file doesn't exist
+            
+            # Save new signature
+            sig_filename = secure_filename(f"sig_{username}_{signature_file.filename}")
+            signature_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], sig_filename))
+            user.signature_filename = sig_filename
+
+        db.session.commit()
+        flash(f'User "{username}" updated successfully!', 'success')
+        return redirect(url_for('main.superadmin_dashboard'))
+
+    plants = Plant.query.all()
+    return render_template('superadmin/user_form.html', plants=plants, user=user, form_title="Edit QA User")
+
+
+@bp.route('/superadmin/users/delete/<int:user_id>', methods=['POST'])
+# ... (rest of delete_user route)
+
+
 @bp.route('/superadmin/products/new', methods=['POST'])
 @login_required
 @superadmin_required
@@ -442,7 +500,9 @@ def new_product():
         product = Product(name=name, sku=sku)
         db.session.add(product)
         db.session.commit()
-        flash(f'Product "{name}" created successfully!', 'success')
+        flash(f'Product "{name}" created! Now, please add its test templates.', 'success')
+        # This is the new redirect, which passes the new product ID
+        return redirect(url_for('main.superadmin_dashboard', tab='templates', product_id=product.id))
     else:
         flash('Product Name and SKU are required.', 'danger')
     return redirect(url_for('main.superadmin_dashboard'))
@@ -456,6 +516,89 @@ def delete_product(product_id):
     db.session.commit()
     flash(f'Product "{product.name}" has been deleted.', 'success')
     return redirect(url_for('main.superadmin_dashboard'))
+
+
+@bp.route('/superadmin/templates/add/<int:product_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def add_template(product_id):
+    product = Product.query.get_or_404(product_id)
+    try:
+        new_template = ReportTemplate(
+            product_id=product.id,
+            parameter=request.form.get('parameter'),
+            specification=request.form.get('specification'),
+            method=request.form.get('method'),
+            order=int(request.form.get('order'))
+        )
+        db.session.add(new_template)
+        db.session.commit()
+        flash(f'New template "{new_template.parameter}" added to {product.name}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding template: {e}', 'danger')
+    
+    return redirect(url_for('main.superadmin_dashboard')) # User will land on the last active tab
+
+@bp.route('/superadmin/templates/delete/<int:template_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def delete_template(template_id):
+    template = ReportTemplate.query.get_or_404(template_id)
+    try:
+        db.session.delete(template)
+        db.session.commit()
+        flash(f'Template "{template.parameter}" deleted.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting template: {e}', 'danger')
+
+    return redirect(url_for('main.superadmin_dashboard'))
+
+
+# --- MASTER PARAMETER ROUTES ---
+
+@bp.route('/superadmin/master_parameters/add', methods=['POST'])
+@login_required
+@superadmin_required
+def new_master_parameter():
+    try:
+        new_param = ParameterMaster(
+            name=request.form.get('name'),
+            default_method=request.form.get('default_method')
+        )
+        db.session.add(new_param)
+        db.session.commit()
+        flash(f'Master Parameter "{new_param.name}" added.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: Could not add parameter. It might already exist. {e}', 'danger')
+    return redirect(url_for('main.superadmin_dashboard', tab='master_parameters'))
+
+@bp.route('/superadmin/master_parameters/delete/<int:param_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def delete_master_parameter(param_id):
+    param = ParameterMaster.query.get_or_404(param_id)
+    try:
+        db.session.delete(param)
+        db.session.commit()
+        flash(f'Master Parameter "{param.name}" deleted.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: Could not delete parameter. It might be in use. {e}', 'danger')
+    return redirect(url_for('main.superadmin_dashboard', tab='master_parameters'))
+
+@bp.route('/api/master_parameters')
+@login_required
+@superadmin_required
+def get_master_parameters():
+    params = ParameterMaster.query.all()
+    param_list = [{'name': p.name, 'method': p.default_method} for p in params]
+    return jsonify(param_list)
+
+# --- END MASTER PARAMETER ROUTES ---
+
 
 @bp.route('/superadmin/plants/new', methods=['POST'])
 @login_required
@@ -489,15 +632,36 @@ def delete_plant(plant_id):
 @login_required
 @superadmin_required
 def edit_product(product_id):
-    # This is a placeholder as the functionality wasn't fully implemented
-    flash('Edit product functionality is not yet implemented.', 'info')
-    return redirect(url_for('main.superadmin_dashboard'))
+    product = Product.query.get_or_404(product_id)
+    if request.method == 'POST':
+        product.name = request.form.get('product_name')
+        product.sku = request.form.get('product_sku')
+        try:
+            db.session.commit()
+            flash(f'Product "{product.name}" updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: Could not update product. SKU might already exist. {e}', 'danger')
+        return redirect(url_for('main.superadmin_dashboard'))
+
+    return render_template('superadmin/edit_product.html', product=product)
+
 
 @bp.route('/superadmin/plants/edit/<int:plant_id>', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
 def edit_plant(plant_id):
-    # This is a placeholder as the functionality wasn't fully implemented
-    flash('Edit plant functionality is not yet implemented.', 'info')
-    return redirect(url_for('main.superadmin_dashboard'))
+    plant = Plant.query.get_or_404(plant_id)
+    if request.method == 'POST':
+        plant.name = request.form.get('plant_name')
+        plant.code = request.form.get('plant_code')
+        try:
+            db.session.commit()
+            flash(f'Plant "{plant.name}" updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: Could not update plant. Name or Code might already exist. {e}', 'danger')
+        return redirect(url_for('main.superadmin_dashboard'))
+
+    return render_template('superadmin/edit_plant.html', plant=plant)
 

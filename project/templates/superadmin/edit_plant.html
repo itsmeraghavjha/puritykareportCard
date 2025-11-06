@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Edit Plant{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    {% include 'superadmin/plant_form.html' with {
+        'form_title': 'Edit Plant: ' ~ plant.name,
+        'plant': plant
+    } %}
+</div>
+{% endblock %}

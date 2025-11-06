@@ -68,40 +68,42 @@ from datetime import date
 @with_appcontext
 @click.option('--username', prompt=True, help='The username for the new user.')
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='The password for the new user.')
-@click.option('--plant', prompt=True, help='The plant name the user belongs to (e.g., Shamirpet, Uppal).')
-# ADDED: An optional, interactive prompt for the signature filename.
-@click.option('--signature', prompt='Signature Filename (optional, press Enter to skip)', default='', help='(Optional) The filename of the signature image.')
-def create_user_command(username, password, plant, signature):
-    """(SAFE) Creates a new QA user interactively."""
-    # Check if plant exists
-    # plant_obj = Plant.query.filter_by(name=plant).first()
-    # if not plant_obj:
-    #     click.echo(f"Error: Plant '{plant}' does not exist. Please create the plant first via the superadmin dashboard or a seed command.")
-    #     return
-
+@click.option('--role', prompt='User role (qa or superadmin)', default='qa', type=click.Choice(['qa', 'superadmin']), help='The role for the new user.')
+def create_user_command(username, password, role):
+    """(SAFE) Creates a new user interactively."""
+    
     # Check if username exists
     if User.query.filter_by(username=username).first():
         click.echo(f"Error: User '{username}' already exists.")
         return
 
-    # Handle the optional signature input
-    signature_filename = signature.strip() if signature.strip() else None
+    plant_name = None
+    signature_filename = None
 
-    # Create new user with the signature
+    if role == 'qa':
+        # QA users require a plant and signature
+        plant_name = click.prompt('Plant name (e.g., Shamirpet, Uppal)')
+        signature_input = click.prompt('Signature Filename (optional, press Enter to skip)', default='')
+        signature_filename = signature_input.strip() if signature_input.strip() else None
+    else:
+        # Superadmin is not tied to a plant.
+        # We must provide a value because the DB column is not nullable.
+        # 'Corporate' is a sensible default.
+        plant_name = 'Corporate' 
+        click.echo(f"Creating superadmin. Plant set to '{plant_name}'.")
+
+    # Create new user
     new_user = User(
         username=username,
-        plant_name=plant,
-        role='qa',  # Defaults to creating a QA user
+        plant_name=plant_name,
+        role=role,
         signature_filename=signature_filename
     )
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
 
-    click.echo(f"Successfully created QA user '{username}' for plant '{plant}'.")
-
-
-
+    click.echo(f"Successfully created {role} user '{username}'.")
 
 @click.command('init-db')
 @with_appcontext

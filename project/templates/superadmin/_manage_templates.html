@@ -1,0 +1,149 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6" 
+     x-data="templateManager()" 
+     @set-product-id.window="selectedProductId = $event.detail; fetchTemplates()" 
+     x-init="loadMasterParams()">
+    
+    <div class="md:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow">
+        <h2 class="text-lg font-semibold text-gray-700 mb-3">Manage Report Templates</h2>
+        
+        <div>
+            <label for="product_select" class="block text-sm font-medium text-gray-700">Select a Product</label>
+            <select id="product_select" x-model="selectedProductId" @change="fetchTemplates()" class="mt-1 block w-full">
+                <option value="">-- Choose a product to see its templates --</option>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }} ({{ product.sku }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mt-6 overflow-x-auto border rounded-lg" x-show="!loading && templates.length > 0">
+            <table class="min-w-full text-sm divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-3 py-2 text-left font-medium text-gray-600">Order</th>
+                        <th class="px-3 py-2 text-left font-medium text-gray-600">Parameter</th>
+                        <th class="px-3 py-2 text-left font-medium text-gray-600">Specification</th>
+                        <th class="px-3 py-2 text-left font-medium text-gray-600">Method</th>
+                        <th class="px-3 py-2 text-center font-medium text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <template x-for="template in templates" :key="template.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2" x-text="template.order"></td>
+                            <td class="px-3 py-2" x-text="template.parameter"></td>
+                            <td class="px-3 py-2" x-text="template.specification"></td>
+                            <td class="px-3 py-2" x-text="template.method"></td>
+                            <td class="px-3 py-2 text-center">
+                                <form :action="'/superadmin/templates/delete/' + template.id" method="POST" class="inline" onsubmit="return confirm('Delete this template?')">
+                                    <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <div x-show="loading" class="text-center py-10 text-gray-500">Loading...</div>
+        <div x-show="!loading && selectedProductId && templates.length === 0" class="text-center py-10 text-gray-500">
+            No templates found for this product.
+        </div>
+        <div x-show="!loading && !selectedProductId" class="text-center py-10 text-gray-500">
+            Please select a product.
+        </div>
+    </div>
+
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow" x-show="selectedProductId">
+        <h2 class="text-lg font-semibold text-gray-700 mb-3">Add Template</h2>
+        <p class="text-sm text-gray-500 mb-3">Add a new test template to the selected product.</p>
+        
+        <form :action="'/superadmin/templates/add/' + selectedProductId" method="POST" class="space-y-3">
+            
+            <div>
+                <label for="parameter_name" class="block text-sm text-gray-600">Parameter</label>
+                <input type="text" id="parameter_name" name="parameter" required 
+                       class="w-full p-2 border rounded-lg" 
+                       list="master-params-list" 
+                       x-model="newParameterName" 
+                       @change="paramSelected()">
+                <datalist id="master-params-list">
+                    <template x-for="param in masterParams" :key="param.name">
+                        <option :value="param.name"></option>
+                    </template>
+                </datalist>
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-600">Specification</label>
+                <input type="text" name="specification" required class="w-full p-2 border rounded-lg">
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-600">Method</label>
+                <input type="text" name="method" required 
+                       class="w-full p-2 border rounded-lg" 
+                       x-model="newMethodName">
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-600">Order (e.g., 1, 2, 3)</label>
+                <input type="number" name="order" required class="w-full p-2 border rounded-lg" :value="templates.length + 1">
+            </div>
+            
+            <button type="submit" class="w-full bg-heritage-green text-white py-2 rounded-lg hover:bg-heritage-green-dark">
+                Save Template
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function templateManager() {
+        return {
+            selectedProductId: '',
+            templates: [],
+            loading: false,
+            // --- Autocomplete Properties ---
+            masterParams: [],
+            newParameterName: '',
+            newMethodName: '',
+            // --- End Autocomplete ---
+
+            fetchTemplates() {
+                if (!this.selectedProductId) {
+                    this.templates = [];
+                    return;
+                }
+                this.loading = true;
+                fetch(`/api/templates/${this.selectedProductId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.templates = data.templates.sort((a, b) => a.order - b.order);
+                        this.loading = false;
+                    })
+                    .catch(() => {
+                        this.loading = false;
+                        alert('Error loading templates.');
+                    });
+            },
+
+            // --- Autocomplete Function: Loads the master list ---
+            loadMasterParams() {
+                fetch(`/api/master_parameters`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.masterParams = data;
+                    });
+            },
+
+            // --- Autocomplete Function: Auto-fills the method ---
+            paramSelected() {
+                const selected = this.masterParams.find(p => p.name === this.newParameterName);
+                if (selected) {
+                    this.newMethodName = selected.method;
+                }
+            }
+        }
+    }
+</script>

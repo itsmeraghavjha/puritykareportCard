@@ -1,5 +1,3 @@
-<!-- templates/superadmin/user_form.html -->
-<!-- A generic form for creating or editing a QA user. -->
 {% extends "base.html" %}
 {% block title %}{{ form_title }}{% endblock %}
 
@@ -10,24 +8,31 @@
     <form method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-xl shadow-lg space-y-6">
         <div>
             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input type="text" name="username" id="username" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+            <input type="text" name="username" id="username" value="{{ user.username if user else '' }}" class="mt-1 block w-full" required>
         </div>
         <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" name="password" id="password" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+                Password {% if user %}(Leave blank to keep unchanged){% endif %}
+            </label>
+            <input type="password" name="password" id="password" class="mt-1 block w-full" {% if not user %}required{% endif %}>
         </div>
         <div>
             <label for="plant_name" class="block text-sm font-medium text-gray-700">Plant</label>
-            <select id="plant_name" name="plant_name" class="mt-1 block w-full text-lg px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-heritage-green focus:ring-heritage-green" required>
+            <select id="plant_name" name="plant_name" class="mt-1 block w-full" required>
                 <option value="">Select a plant</option>
                 {% for plant in plants %}
-                <option value="{{ plant.name }}">{{ plant.name }}</option>
+                <option value="{{ plant.name }}" {% if user and user.plant_name == plant.name %}selected{% endif %}>
+                    {{ plant.name }}
+                </option>
                 {% endfor %}
             </select>
         </div>
         <div>
             <label for="signature" class="block text-sm font-medium text-gray-700">Signature File</label>
             <input type="file" name="signature" id="signature" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-heritage-green hover:file:bg-green-100">
+            {% if user and user.signature_filename %}
+                <p class="text-xs text-gray-500 mt-2">Current file: {{ user.signature_filename }}</p>
+            {% endif %}
         </div>
 
         <div class="pt-6 border-t border-gray-200 flex justify-end items-center space-x-4">

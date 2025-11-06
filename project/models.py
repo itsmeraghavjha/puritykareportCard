@@ -2,13 +2,18 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from . import db
+from sqlalchemy import UniqueConstraint
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='qa') # 'qa' or 'superadmin'
-    plant_name = db.Column(db.String(100), nullable=False)
+    plant_name = db.Column(db.String(100), nullable=True) 
+    # Add the new, nullable column
+    plant_id = db.Column(db.Integer, db.ForeignKey('plant.id'), nullable=True)
+    # Add the relationship
+    plant = db.relationship('Plant', backref=db.backref('users', lazy=True))
     signature_filename = db.Column(db.String(200), nullable=True)
     reports = db.relationship('QualityReport', backref='creator', lazy=True)
 
@@ -26,7 +31,30 @@ class Product(db.Model):
 
 class Plant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    # Remove unique=True from here
+    name = db.Column(db.String(100), nullable=False)
+    # Remove unique=True from here
+    code = db.Column(db.String(50), nullable=False)
+
+    # Add this to explicitly name ALL unique constraints
+    __table_args__ = (
+        UniqueConstraint('name', name='uq_plant_name'),
+        UniqueConstraint('code', name='uq_plant_code'),
+    )
+
+
+class ParameterMaster(db.Model):
+    """A master library of all possible test parameters."""
+    id = db.Column(db.Integer, primary_key=True)
+    # The name of the test, e.g., "Fat % (Min)"
+    name = db.Column(db.String(200), unique=True, nullable=False)
+    # The default method, e.g., "Gerber -FSSAI"
+    default_method = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        return f'<ParameterMaster {self.name}>'
+
+
 
 class ReportTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,9 +73,16 @@ class QualityReport(db.Model):
     # It is nullable to ensure old reports without this data remain valid.
     machine_codes = db.Column(db.String(500), nullable=True)
     expiry_date = db.Column(db.Date, nullable=False)
-    plant_name = db.Column(db.String(100), nullable=False)
+    plant_name = db.Column(db.String(100), nullable=True)
+    # Add the new, nullable column
+    plant_id = db.Column(db.Integer, db.ForeignKey('plant.id'), nullable=True)
+    # Add the relationship
+    plant = db.relationship('Plant', backref=db.backref('reports', lazy=True))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Product')
+    __table_args__ = (
+        db.Index('idx_report_batch_code', 'batch_code'),
+    )
     results = db.relationship('ReportResult', backref='report', lazy='dynamic', cascade="all, delete-orphan")
 
 class ReportResult(db.Model):
