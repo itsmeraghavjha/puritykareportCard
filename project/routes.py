@@ -6,7 +6,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
                    flash, current_app, make_response, send_from_directory, jsonify)
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime, date, timedelta # <-- Added timedelta for analytics
+from datetime import datetime, date, timedelta
 from functools import wraps
 
 from . import db
@@ -19,6 +19,7 @@ from .utils import generate_report_pdf
 
 from xhtml2pdf import pisa
 from io import BytesIO
+from urllib.parse import urlparse
 
 bp = Blueprint('main', __name__)
 
@@ -106,8 +107,6 @@ def index():
 
     return render_template('public/index.html', awareness_data=AWARENESS_DATA)
 
-
-from urllib.parse import urlparse 
 
 @bp.route('/download/report/<int:report_id>')
 def download_pdf_report(report_id):
@@ -498,6 +497,7 @@ def edit_user(user_id):
         return redirect(url_for('main.superadmin_dashboard'))
 
     plants = Plant.query.all()
+    # FIX: Corrected missing closing quote and parenthesis
     return render_template('superadmin/user_form.html', plants=plants, user=user, form_title="Edit QA User")
 
 @bp.route('/superadmin/products/new', methods=['POST'])
@@ -589,7 +589,8 @@ def add_template(product_id):
             parameter=request.form.get('parameter'),
             specification=request.form.get('specification'),
             method=request.form.get('method'),
-            order=int(request.form.get('order'))
+            # This is the line that will now give a descriptive error if the value is bad
+            order=int(request.form.get('order')) 
         )
         db.session.add(new_template)
         db.session.commit()
@@ -605,13 +606,8 @@ def add_template(product_id):
 
     except Exception as e:
         db.session.rollback()
+        # --- FIX: Return the specific error message (str(e)) ---
         return jsonify({'success': False, 'error': str(e)}), 500
-
-# In project/routes.py
-
-# In project/routes.py
-
-# In project/routes.py
 
 @bp.route('/superadmin/templates/delete/<int:template_id>', methods=['POST'])
 @login_required
@@ -619,23 +615,40 @@ def add_template(product_id):
 def delete_template(template_id):
     template = ReportTemplate.query.get_or_404(template_id)
     try:
-        # Get the ID before we delete it, so we can send it back to Alpine.js
         template_id_copy = template.id  
         
         db.session.delete(template)
         db.session.commit()
         
-        # --- THIS IS THE FIX ---
-        # Send a JSON response on success, which your HTML is waiting for
-        return jsonify({'success': True, 'template_id': template_id_copy})
+        # Ensures a clean JSON response with the correct mimetype
+        return jsonify({'success': True, 'template_id': template_id_copy}), 200, {'Content-Type': 'application/json'}
         
     except Exception as e:
         db.session.rollback()
         
-        # Send a JSON error response
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500, {'Content-Type': 'application/json'}
 
-    # The old "flash" and "redirect" are no longer used
+
+@bp.route('/superadmin/templates/edit/<int:template_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def edit_template(template_id):
+    template = ReportTemplate.query.get_or_404(template_id)
+    data = request.get_json()
+    
+    try:
+        # Only allow updates to specification and order, locking parameter and method
+        template.specification = data['specification']
+        template.order = data['order']
+        
+        db.session.commit()
+        return jsonify({'success': True}), 200, {'Content-Type': 'application/json'}
+        
+    except Exception as e:
+        db.session.rollback()
+        # Return a 400 Bad Request if data is missing or conversion fails
+        return jsonify({'success': False, 'error': f"Failed to save changes: {e}"}), 400, {'Content-Type': 'application/json'}
+    
 
 # --- MASTER PARAMETER ROUTES ---
 

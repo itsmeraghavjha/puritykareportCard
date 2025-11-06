@@ -27,6 +27,13 @@
                 _resolve: null,
                 _reject: null,
 
+                // --- FIX 1: Add init() ---
+                // This exposes the component instance to the global window object
+                // so our window.app helper can call its methods directly.
+                init() {
+                    window.appModalInstance = this;
+                },
+
                 open(type, title, message) {
                     this.isOpen = true;
                     this.type = type;
@@ -34,6 +41,7 @@
                     this.message = message;
                     this.isConfirm = (type === 'confirm');
                     
+                    // This is the key: it returns a promise
                     return new Promise((resolve, reject) => {
                         this._resolve = resolve;
                         this._reject = reject;
@@ -42,41 +50,40 @@
 
                 accept() {
                     this.isOpen = false;
-                    this._resolve(true);
+                    this._resolve(true); // Resolves the promise with 'true'
                 },
                 
                 cancel() {
                     this.isOpen = false;
-                    this._resolve(false); 
+                    this._resolve(false); // Resolves the promise with 'false'
                 }
             }));
         });
 
-        // Create a simple global helper object
+        // --- FIX 2: Rewrite window.app helper ---
+        // This now calls the modal instance directly and returns the promise
+        // from the .open() method, allowing 'await' to work.
         window.app = {
             alert(title, message) {
-                window.dispatchEvent(new CustomEvent('open-modal', { 
-                    detail: { type: 'alert', title, message }
-                }));
+                if (window.appModalInstance) {
+                    window.appModalInstance.open('alert', title, message);
+                } else {
+                    // Fallback just in case
+                    alert(title + "\n" + message);
+                }
             },
             confirm(title, message) {
-                return window.dispatchEvent(new CustomEvent('open-modal', { 
-                    detail: { type: 'confirm', title, message }
-                })).detail;
+                if (window.appModalInstance) {
+                    return window.appModalInstance.open('confirm', title, message);
+                } else {
+                    // Fallback just in case
+                    return Promise.resolve(confirm(title + "\n" + message));
+                }
             }
         };
 
-        // ---
-        // This is the global helper for all delete forms
-        // ---
-        async function handleAsyncSubmit(form, title, message) {
-            event.preventDefault(); 
-            
-            const confirmed = await window.app.confirm(title, message);
-            if (confirmed) {
-                form.submit();
-            }
-        }
+        // --- FIX 3: REMOVED the broken handleAsyncSubmit function ---
+        // The old function that caused the infinite loop is now gone.
     </script>
     <style>
         body { 

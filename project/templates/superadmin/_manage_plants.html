@@ -22,10 +22,11 @@
                         <td class="px-6 py-4 space-x-2">
                             <a href="{{ url_for('main.edit_plant', plant_id=plant.id) }}" 
                                class="text-blue-600 hover:underline">Edit</a>
+                            <!-- FIX: Using custom modal for delete confirmation -->
                             <form action="{{ url_for('main.delete_plant', plant_id=plant.id) }}" 
-                                  method="POST" class="inline">
-                                <button type="submit" class="text-red-600 hover:underline"
-                                        onclick="return confirm('Are you sure you want to delete this plant?')">
+                                  method="POST" class="inline"
+                                  onsubmit="handleDeleteConfirm(event, this, 'Delete Plant?', 'Are you sure you want to delete plant {{ plant.name }}?');">
+                                <button type="submit" class="text-red-600 hover:underline">
                                     Delete
                                 </button>
                             </form>
@@ -64,3 +65,13 @@
         </form>
     </div>
 </div>
+<script>
+    // Global helper function to handle form submission confirmations using the custom modal
+    async function handleDeleteConfirm(event, form, title, message) {
+        event.preventDefault(); 
+        const confirmed = await window.app.confirm(title, message);
+        if (confirmed) {
+            form.submit();
+        }
+    }
+</script>
