@@ -17,11 +17,13 @@
             <input type="password" name="password" id="password" class="mt-1 block w-full" {% if not user %}required{% endif %}>
         </div>
         <div>
-            <label for="plant_name" class="block text-sm font-medium text-gray-700">Plant</label>
-            <select id="plant_name" name="plant_name" class="mt-1 block w-full" required>
+            <label for="plant_id" class="block text-sm font-medium text-gray-700">Plant</label>
+            <!-- FIX 1: Changed name attribute to 'plant_id' -->
+            <select id="plant_id" name="plant_id" class="mt-1 block w-full" required>
                 <option value="">Select a plant</option>
                 {% for plant in plants %}
-                <option value="{{ plant.name }}" {% if user and user.plant_name == plant.name %}selected{% endif %}>
+                <!-- FIX 2: Changed value attribute to 'plant.id' -->
+                <option value="{{ plant.id }}" {% if user and user.plant_id == plant.id %}selected{% endif %}>
                     {{ plant.name }}
                 </option>
                 {% endfor %}
@@ -41,4 +43,4 @@
         </div>
     </form>
 </div>
-{% endblock %}
+{% endblock content %}
